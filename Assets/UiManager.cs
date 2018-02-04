@@ -2,51 +2,78 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using System.Linq;
+using Assets;
 
-public class UiManager : MonoBehaviour {
 
-	Dictionary<string, Action> mMenu = new Dictionary<string, Action> 
+public class UiManager : MonoBehaviour
+{
+  CustomMenu mMenu = new CustomMenu(new Vector2(80, 40))
 	{ 
 		{ "CreateTile",CreateTile},
 		{ "asd2",() => { print("Menu item 2 has been pressed.");} },
 	};
 
-	Vector2 cMenuItemSize = new Vector2(80,40);
+  public const int cDistance = 4;
 
-	// Use this for initialization
-	void Start () {
-		//Camera.main.orthographic = true;
-		Camera.main.transform.Rotate (new Vector3(90, 0, 0)); 
-		Camera.main.transform.Translate (new Vector3 (0, 400, 0));
-	}
-			
+  static Camera MainCamera { get { return Camera.main; } }
 
-	void OnGUI()
-	{
-		CreateMenuBar();
-	}
+  // Use this for initialization
+  void Start()
+  {
+  }
 
-	static void CreateTile()
-	{
-		var wCube = GameObject.CreatePrimitive (PrimitiveType.Cube);
+  static void CreateTile()
+  {
+    var wTile = GameObject.CreatePrimitive(PrimitiveType.Plane);
 
-		wCube.tag = Guid.NewGuid().ToString();
-	}
+    wTile.transform.localScale = new Vector3(30, 30, 30);
+    wTile.GetComponent<Renderer>().material.color = new Color(0,0,1);
 
-	void CreateMenuBar()
-	{
-		for(var wIndex=0; wIndex < mMenu.Count; wIndex++)
-		{
-			var wKey=mMenu.Keys.ToList()[wIndex];
-			if (GUI.Button(new Rect (new Vector2 (10, 10 + wIndex * cMenuItemSize.y), cMenuItemSize), mMenu.Keys.ToList()[wIndex]))
-				mMenu[wKey]();
-		}
-	}
+   //wTile.tag = Guid.NewGuid().ToString();
+    wTile.transform.position = MainCamera.transform.position + MainCamera.transform.forward * 20;
+    wTile.transform.rotation = new Quaternion(0.0f, MainCamera.transform.rotation.y, 0.0f, MainCamera.transform.rotation.w);
+    
+    ContextMenu.CreateComponent(wTile, MainCamera);
 
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    MoveInfrontOfCamera(wTile, MainCamera, 20);
+  }
 
+
+  void OnGUI()
+  {
+    mMenu.DrawMenu(-Screen.width/30,50,MainCamera);
+  }
+
+
+  /// <summary>
+  /// Helper method for translating objects relative to a camera's position.
+  /// </summary>
+  /// <param name="gameObject">Object to be Moved.</param>
+  /// <param name="camera">The camera that the Movment will be relative to.</param>
+  /// <param name="distanceVector">Distance to be moved</param>
+  static void MoveRelativeToCamera(GameObject gameObject, Camera camera, Vector3 distanceVector)
+  {
+
+    if (gameObject != null)
+    {
+      gameObject.transform.position = camera.transform.position + distanceVector;
+      gameObject.transform.rotation = new Quaternion(0.0f, camera.transform.rotation.y, 0.0f, camera.transform.rotation.w);
+    }
+  }
+
+  /// <summary>
+  ///  Helper method for translating objects forward relative to a camera's position.
+  /// </summary>
+  /// <param name="gameObject">Object to be Moved.</param>
+  /// <param name="camera">The camera that the Movment will be relative to.</param>
+  /// <param name="distance">Distance to be moved</param>
+  static void MoveInfrontOfCamera(GameObject gameObject, Camera camera, int distance)
+  {
+    MoveRelativeToCamera(gameObject, camera, camera.transform.forward * distance);
+  }
+
+  // Update is called once per frame
+  private void Update()
+  {
+  }
 }
